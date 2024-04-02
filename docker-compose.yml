@@ -1,6 +1,6 @@
 # 使用 Docker Compose 的版本 3
 version: '3'
-# 定义一个服务叫做 aspnetcore-in-docker
+# 定义一个服务叫做 titanicmlcomp
 services:
   titanicmlcomp:
     # 使用名为 aspnetcore-in-docker 的镜像来构建容器
