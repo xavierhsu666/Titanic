@@ -1,0 +1,14 @@
+# 使用 Docker Compose 的版本 3
+version: '3'
+# 定义一个服务叫做 aspnetcore-in-docker
+services:
+  titanicmlcomp:
+    # 使用名为 aspnetcore-in-docker 的镜像来构建容器
+    image: titanicmlcomp
+    
+    # 将容器命名为 StockProphet_Project
+    container_name: titanicmlcomp
+    
+    # 将主机端口 5253 映射到容器端口 8080
+    ports:
+      - 5253:8080
