@@ -1,3 +1,4 @@
+#%%
 ### BaseModel
 # loading package
 import numpy as np
@@ -12,7 +13,10 @@ from sklearn.feature_selection import RFECV
 # loading data
 df_train = pd.read_csv("./train.csv")
 df_test = pd.read_csv("./test.csv")
-df_data = df_train.add(df_test)
+df_data = df_train._append(df_test)
+
+print(df_data)
+
 # for display dataframe
 from IPython.display import display
 from IPython.display import display_html
@@ -25,10 +29,21 @@ def display_side_by_side(*args):
 import warnings
 warnings.filterwarnings("ignore")
 
-sns.countplot(df_data['Sex'], hue=df_data['Survived'])
+
+# 將資料轉換為長格式
+df_data_long = pd.melt(df_data, id_vars=['Survived'], value_vars=['Sex'], var_name='Variable', value_name='Value')
+
+# 繪製計數圖
+sns.countplot(data=df_data_long, x='Value', hue='Survived')
+plt.show()
+#%%
+
+# sns.countplot(df_data['Sex'], hue=df_data['Survived'])
 display(df_data[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().round(3))
 
-sns.countplot(df_data['Pclass'], hue=df_data['Survived'])
+df_data_long = pd.melt(df_data, id_vars=['Survived'], value_vars=['Pclass'], var_name='Variable', value_name='Value')
+sns.countplot(data=df_data_long, x='Value', hue='Survived')
+plt.show()
 df_data[["Pclass", "Survived"]].groupby(['Pclass'], as_index=False).mean().round(3)
 
 # Convert Sex
@@ -93,9 +108,9 @@ fig, [ax1, ax2, ax3] = plt.subplots(1, 3,sharey=True)
 fig.set_figwidth(18)
 for axi in [ax1, ax2, ax3]:
     axi.axhline(0.5,linestyle='dashed', c='black',alpha = .3)
-g1 = sns.factorplot(x='FareBin_Code_4', y="Survived", data=df_data,kind='bar',ax=ax1)
-g2 = sns.factorplot(x='FareBin_Code_5', y="Survived", data=df_data,kind='bar',ax=ax2)
-g3 = sns.factorplot(x='FareBin_Code_6', y="Survived", data=df_data,kind='bar',ax=ax3)
+g1 = sns.catplot (x='FareBin_Code_4', y="Survived", data=df_data,kind='bar',ax=ax1)
+g2 = sns.catplot(x='FareBin_Code_5', y="Survived", data=df_data,kind='bar',ax=ax2)
+g3 = sns.catplot(x='FareBin_Code_6', y="Survived", data=df_data,kind='bar',ax=ax3)
 # close FacetGrid object
 plt.close(g1.fig)
 plt.close(g2.fig)
@@ -115,7 +130,7 @@ selector = RFECV(RandomForestClassifier(n_estimators=250,min_samples_split=20),c
 selector.fit(X[compare], Y)
 print(selector.support_)
 print(selector.ranking_)
-print(selector.grid_scores_*100)
+print(selector.cv_results_['mean_test_score'] * 100)
 
 score_b4,score_b5, score_b6 = [], [], []
 seeds = 10
@@ -123,9 +138,9 @@ for i in range(seeds):
     diff_cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=i)
     selector = RFECV(RandomForestClassifier(random_state=i,n_estimators=250,min_samples_split=20),cv=diff_cv,n_jobs=-1)
     selector.fit(X[compare], Y)
-    score_b4.append(selector.grid_scores_[2])
-    score_b5.append(selector.grid_scores_[3])
-    score_b6.append(selector.grid_scores_[4])
+    score_b4.append(selector.cv_results_['mean_test_score'][2])
+    score_b5.append(selector.cv_results_['mean_test_score'][3])
+    score_b6.append(selector.cv_results_['mean_test_score'][4])
     
     # to np.array
 score_list = [score_b4, score_b5, score_b6]
@@ -230,8 +245,16 @@ submit.to_csv("submit_connect.csv",index=False)
 df_data['Has_Age'] = df_data['Age'].isnull().map(lambda x : 0 if x == True else 1)
 fig, [ax1, ax2] = plt.subplots(1, 2)
 fig.set_figwidth(18)
-ax1 = sns.countplot(df_data['Pclass'],hue=df_data['Has_Age'],ax=ax1)
-ax2 = sns.countplot(df_data['Sex'],hue=df_data['Has_Age'],ax=ax2)
+# 将 wide-form 数据转换为 long-form 数据
+df_data_long = pd.melt(df_data, id_vars=['Pclass'], value_vars=['Has_Age'], var_name='Variable', value_name='Value')
+
+# 使用 long-form 数据进行绘图
+ax1 = sns.countplot(data=df_data_long, x='Pclass', hue='Value')
+# 将 wide-form 数据转换为 long-form 数据
+df_data_long = pd.melt(df_data, id_vars=['Sex'], value_vars=['Has_Age'], var_name='Variable', value_name='Value')
+
+# 使用 long-form 数据进行绘图
+ax1 = sns.countplot(data=df_data_long, x='Sex', hue='Value')
 pd.crosstab(df_data['Has_Age'],df_data['Sex'],margins=True).round(3)
 
 # Masks
@@ -287,7 +310,7 @@ submit.to_csv("submit_minor.csv",index=False)
 
 ### 家庭人數 (Family Size)
 
-g = sns.factorplot(x='Family_size', y='Survived',data=df_data)
+g = sns.catplot(x='Family_size', y='Survived',data=df_data)
 g = g.set_ylabels("Survival Probability")
 # cut into 3 class
 df_data['L_Family'] = df_data['Family_size'].apply(lambda x: 0 if x<= 4 else 1).astype(int)
